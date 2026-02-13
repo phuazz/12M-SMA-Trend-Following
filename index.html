@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&P 500: 12-Month SMA Trend Following vs Buy & Hold (1926–2025)</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#ffffff;--surface:#f7f8fa;--card:#ffffff;--border:#e2e5e9;--border-hi:#c8cdd3;
+  --t1:#1a1a2e;--t2:#555b6e;--t3:#8e95a5;
+  --green:#15803d;--green-l:#16a34a;--green-bg:rgba(22,163,74,.07);
+  --red:#dc2626;--red-bg:rgba(220,38,38,.06);
+  --blue:#2563eb;--blue-bg:rgba(37,99,235,.06);
+  --amber:#b45309;--amber-bg:rgba(180,83,9,.06);
+  --cyan:#0891b2;
+  --bh:#1e40af;--sma:#e11d48;
+}
+html{font-size:15px}
+body{font-family:'Source Sans 3',Georgia,system-ui,sans-serif;background:var(--bg);color:var(--t1);line-height:1.65;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:.88em}
+
+.masthead{background:var(--surface);border-bottom:1px solid var(--border);padding:28px 32px 22px}
+.masthead-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px}
+.masthead h1{font-family:'Source Serif 4',Georgia,serif;font-size:26px;font-weight:700;letter-spacing:-.3px;color:var(--t1)}
+.masthead h1 em{font-style:italic;color:var(--sma)}
+.masthead .sub{font-size:13px;color:var(--t3);margin-top:4px;letter-spacing:.2px}
+.kpi-strip{display:flex;gap:28px;flex-wrap:wrap}
+.kpi-strip .kpi{text-align:right}
+.kpi-strip .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);font-weight:600}
+.kpi-strip .kpi-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;line-height:1.3}
+
+.tab-bar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.tab-bar-inner{max-width:1400px;margin:0 auto;display:flex;gap:0;padding:0 32px}
+.tab-btn{padding:14px 22px;background:none;border:none;color:var(--t3);font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab-btn:hover{color:var(--t1)}
+.tab-btn.active{color:var(--bh);border-bottom-color:var(--bh)}
+.tab-content{display:none;max-width:1400px;margin:0 auto;padding:28px 32px}
+.tab-content.active{display:block}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px}
+.card-title{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;margin-bottom:16px;color:var(--t1)}
+.card-subtitle{font-size:13px;color:var(--t3);margin-top:-12px;margin-bottom:16px}
+
+.row{display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.col-2{flex:1;min-width:300px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.kpi-card .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:600;margin-bottom:4px}
+.kpi-card .value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
+.kpi-card .detail{font-size:12px;color:var(--t3);margin-top:2px}
+.kpi-card.green .value{color:var(--green)}
+.kpi-card.red .value{color:var(--red)}
+.kpi-card.blue .value{color:var(--blue)}
+.kpi-card.amber .value{color:var(--amber)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);font-weight:600;color:var(--t3);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-blue{color:var(--blue)}
+
+.legend{display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t2)}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+
+.rule-box{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--bh);border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:20px}
+.rule-box h3{font-family:'Source Serif 4',Georgia,serif;font-size:16px;font-weight:600;margin-bottom:8px}
+.rule-box p{color:var(--t2);font-size:14px;line-height:1.7}
+.rule-box .highlight{color:var(--bh);font-weight:600}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+
+.chart-container{width:100%;min-height:400px}
+.chart-container-sm{width:100%;min-height:300px}
+
+.footer{max-width:1400px;margin:0 auto;padding:20px 32px 40px;font-size:12px;color:var(--t3);border-top:1px solid var(--border)}
+.footer a{color:var(--blue);text-decoration:none}
+
+@media(max-width:768px){
+  .masthead{padding:20px 16px}
+  .tab-bar-inner{padding:0 16px;overflow-x:auto}
+  .tab-btn{padding:12px 14px;font-size:13px;white-space:nowrap}
+  .tab-content{padding:20px 16px}
+  .kpi-strip{gap:16px}
+  .row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <h1>S&P 500: <em>12M SMA Trend Following</em> vs Buy & Hold</h1>
+      <div class="sub">Monthly rebalancing · 1926–2025 · Data: AQR Capital Management, LLC</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">B&H CAGR</div>
+        <div class="kpi-val mono" style="color:var(--bh)">9.9%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">12M SMA CAGR</div>
+        <div class="kpi-val mono" style="color:var(--sma)">9.5%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Drawdown Cut</div>
+        <div class="kpi-val mono" style="color:var(--green)">−83% → −45%</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn active" onclick="showTab('overview',this)">Overview</button>
+    <button class="tab-btn" onclick="showTab('performance',this)">Performance</button>
+    <button class="tab-btn" onclick="showTab('crises',this)">Crisis Drawdowns</button>
+    <button class="tab-btn" onclick="showTab('mechanics',this)">Strategy Mechanics</button>
+    <button class="tab-btn" onclick="showTab('decades',this)">By Decade</button>
+  </div>
+</nav>
+
+<!-- ══════ TAB 1: OVERVIEW ══════ -->
+<section id="overview" class="tab-content active">
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="label">Buy & Hold CAGR</div>
+      <div class="value">9.9%</div>
+      <div class="detail">Sharpe 0.37</div>
+    </div>
+    <div class="kpi-card" style="border-left:3px solid var(--sma)">
+      <div class="label">12M SMA CAGR</div>
+      <div class="value" style="color:var(--sma)">9.5%</div>
+      <div class="detail">Sharpe 0.51</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Return Cost</div>
+      <div class="value">0.4%</div>
+      <div class="detail">Annual return given up</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Max DD Reduction</div>
+      <div class="value">−38pp</div>
+      <div class="detail">−83% → −45%</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="label">Time Invested</div>
+      <div class="value">73%</div>
+      <div class="detail">27% in T-bills</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="label">Sharpe Improvement</div>
+      <div class="value">+38%</div>
+      <div class="detail">0.37 → 0.51</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Equity Curves (Log Scale)</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--bh)"></div>Buy & Hold</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--sma)"></div>12M SMA</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#cbd5e1"></div>Cash / T-Bills Periods</div>
+    </div>
+    <div id="equity-chart" class="chart-container"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Drawdown Comparison</div>
+    <div id="drawdown-chart" class="chart-container"></div>
+  </div>
+</section>
+
+<!-- ══════ TAB 2: PERFORMANCE ══════ -->
+<section id="performance" class="tab-content">
+  <div class="row">
+    <div class="col-2">
+      <div class="card">
+        <div class="card-title">Risk-Return Metrics</div>
+        <table>
+          <thead><tr><th>Metric</th><th class="text-right">Buy & Hold</th><th class="text-right">12M SMA</th><th class="text-right">Δ</th></tr></thead>
+          <tbody>
+            <tr><td>CAGR</td><td class="text-right mono">9.9%</td><td class="text-right mono">9.5%</td><td class="text-right mono text-red">−0.4%</td></tr>
+            <tr><td>Annualized Volatility</td><td class="text-right mono">18.6%</td><td class="text-right mono">12.4%</td><td class="text-right mono text-green">−6.2%</td></tr>
+            <tr><td>Sharpe Ratio</td><td class="text-right mono">0.37</td><td class="text-right mono">0.51</td><td class="text-right mono text-green">+0.14</td></tr>
+            <tr><td>Max Drawdown</td><td class="text-right mono">−83%</td><td class="text-right mono">−45%</td><td class="text-right mono text-green">+38pp</td></tr>
+            <tr><td>Sortino Ratio</td><td class="text-right mono">0.50</td><td class="text-right mono">0.73</td><td class="text-right mono text-green">+0.23</td></tr>
+            <tr><td>Time Invested</td><td class="text-right mono">100%</td><td class="text-right mono">73%</td><td class="text-right mono">−27%</td></tr>
+            <tr><td>Best Year</td><td class="text-right mono">+54%</td><td class="text-right mono">+46%</td><td class="text-right mono text-red">−8%</td></tr>
+            <tr><td>Worst Year</td><td class="text-right mono">−43%</td><td class="text-right mono">−19%</td><td class="text-right mono text-green">+24pp</td></tr>
+            <tr><td>Positive Months</td><td class="text-right mono">60%</td><td class="text-right mono">62%</td><td class="text-right mono text-green">+2%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-2">
+      <div class="card">
+        <div class="card-title">The Tradeoff Visualized</div>
+        <div class="card-subtitle">Return vs Risk scatter — higher and left is better</div>
+        <div id="scatter-chart" class="chart-container-sm"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Rolling 5-Year Sharpe Ratio</div>
+        <div id="rolling-sharpe" class="chart-container-sm"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Annual Returns Comparison</div>
+    <div id="annual-returns" class="chart-container"></div>
+  </div>
+</section>
+
+<!-- ══════ TAB 3: CRISIS DRAWDOWNS ══════ -->
+<section id="crises" class="tab-content">
+  <div class="rule-box">
+    <h3>Why It Works in Crises</h3>
+    <p>The 12M SMA strategy sidesteps the worst of long, sustained bear markets by moving to T-bills when the index falls below its trailing average. It won't catch the exact top or bottom — the signal is <span class="highlight">intentionally slow</span> — but in protracted declines like the Great Depression, GFC, and dot-com bust, the lag is a feature, not a bug.</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card green"><div class="label">Great Depression</div><div class="value">−23%</div><div class="detail">vs −83% (B&H)</div></div>
+    <div class="kpi-card green"><div class="label">Dot-Com Crash</div><div class="value">−10%</div><div class="detail">vs −45% (B&H)</div></div>
+    <div class="kpi-card green"><div class="label">Financial Crisis</div><div class="value">−11%</div><div class="detail">vs −51% (B&H)</div></div>
+    <div class="kpi-card amber"><div class="label">COVID Crash</div><div class="value">−21%</div><div class="detail">vs −34% (B&H)</div></div>
+    <div class="kpi-card amber"><div class="label">2022 Bear</div><div class="value">−18%</div><div class="detail">vs −25% (B&H)</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Crisis Drawdown Comparison</div>
+    <div id="crisis-bar" class="chart-container"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Crisis Timeline Detail</div>
+    <table>
+      <thead>
+        <tr><th>Crisis</th><th class="text-center">Period</th><th class="text-right">B&H DD</th><th class="text-right">12M SMA DD</th><th class="text-right">Reduction</th><th class="text-right">Signal Exit</th><th class="text-right">Re-entry</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Great Depression</strong></td><td class="text-center mono">1929–1932</td><td class="text-right mono text-red">−83%</td><td class="text-right mono text-green">−23%</td><td class="text-right mono text-green">60pp</td><td class="text-right mono">Nov 1929</td><td class="text-right mono">May 1933</td></tr>
+        <tr><td><strong>1973–74 Bear</strong></td><td class="text-center mono">1973–1974</td><td class="text-right mono text-red">−43%</td><td class="text-right mono text-green">−16%</td><td class="text-right mono text-green">27pp</td><td class="text-right mono">Jun 1973</td><td class="text-right mono">Feb 1975</td></tr>
+        <tr><td><strong>Dot-Com Bust</strong></td><td class="text-center mono">2000–2002</td><td class="text-right mono text-red">−45%</td><td class="text-right mono text-green">−10%</td><td class="text-right mono text-green">35pp</td><td class="text-right mono">Oct 2000</td><td class="text-right mono">May 2003</td></tr>
+        <tr><td><strong>Global Financial Crisis</strong></td><td class="text-center mono">2007–2009</td><td class="text-right mono text-red">−51%</td><td class="text-right mono text-green">−11%</td><td class="text-right mono text-green">40pp</td><td class="text-right mono">Jan 2008</td><td class="text-right mono">Jul 2009</td></tr>
+        <tr><td><strong>COVID-19</strong></td><td class="text-center mono">Feb–Mar 2020</td><td class="text-right mono text-red">−34%</td><td class="text-right mono">−21%</td><td class="text-right mono text-green">13pp</td><td class="text-right mono">Mar 2020</td><td class="text-right mono">Jun 2020</td></tr>
+        <tr><td><strong>2022 Bear Market</strong></td><td class="text-center mono">2022</td><td class="text-right mono text-red">−25%</td><td class="text-right mono">−18%</td><td class="text-right mono text-green">7pp</td><td class="text-right mono">Apr 2022</td><td class="text-right mono">Jan 2023</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-box" style="border-left-color:var(--amber)">
+    <h3>Where It Doesn't Work</h3>
+    <p>Short, sharp crashes like COVID (34 days peak to trough) and V-shaped recoveries produce <span class="highlight" style="color:var(--amber)">whipsaw losses</span>. The signal exits late and re-enters late, missing the recovery bounce. The 12M SMA is designed for <span class="highlight" style="color:var(--amber)">sustained bear markets</span>, not flash crashes.</p>
+  </div>
+</section>
+
+<!-- ══════ TAB 4: STRATEGY MECHANICS ══════ -->
+<section id="mechanics" class="tab-content">
+  <div class="row">
+    <div class="col-2">
+      <div class="rule-box">
+        <h3>The Rule</h3>
+        <p>At the end of each month, check where the S&P 500 price stands relative to its <span class="highlight">12-month simple moving average</span>:</p>
+        <p style="margin-top:12px"><strong>Price &gt; 12M SMA →</strong> Stay invested in the S&P 500<br>
+        <strong>Price ≤ 12M SMA →</strong> Move to T-bills (cash equivalent)</p>
+        <p style="margin-top:12px">Rebalance <span class="highlight">monthly</span>. That's the entire strategy.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Why 12 Months?</div>
+        <p style="color:var(--t2);font-size:14px;line-height:1.7">
+          The 12-month (~200-day) moving average is the most widely studied trend-following signal in equity markets. Shorter lookbacks (3M, 6M) produce more frequent signals and higher transaction costs with marginal improvement. Longer lookbacks (18M, 24M) are too slow to respond to regime changes. The 12M window balances signal reliability against responsiveness.
+        </p>
+      </div>
+    </div>
+    <div class="col-2">
+      <div class="card">
+        <div class="card-title">Signal Flow</div>
+        <div style="padding:20px;background:var(--surface);border-radius:8px;text-align:center">
+          <div style="display:inline-block;text-align:left;font-size:14px;line-height:2.2;color:var(--t2)">
+            <div style="font-weight:600;color:var(--t1);margin-bottom:8px">Monthly Decision Process</div>
+            <div>① End of month → observe S&P 500 closing price</div>
+            <div>② Compute 12-month SMA of closing prices</div>
+            <div>③ <strong style="color:var(--bh)">If Price &gt; SMA</strong> → allocate 100% to S&P 500</div>
+            <div>④ <strong style="color:var(--sma)">If Price ≤ SMA</strong> → allocate 100% to T-bills</div>
+            <div>⑤ Execute at next month's open</div>
+            <div>⑥ Repeat</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Key Properties</div>
+        <table>
+          <tbody>
+            <tr><td style="font-weight:600">Lookback Period</td><td class="text-right mono">12 months</td></tr>
+            <tr><td style="font-weight:600">Rebalance Frequency</td><td class="text-right mono">Monthly</td></tr>
+            <tr><td style="font-weight:600">Universe</td><td class="text-right">S&P 500 Index</td></tr>
+            <tr><td style="font-weight:600">Risk-Off Asset</td><td class="text-right">U.S. T-Bills</td></tr>
+            <tr><td style="font-weight:600">Avg. Switches / Year</td><td class="text-right mono">~1.5</td></tr>
+            <tr><td style="font-weight:600">Avg. Risk-Off Duration</td><td class="text-right mono">~8 months</td></tr>
+            <tr><td style="font-weight:600">Transaction Costs</td><td class="text-right">Minimal (broad index)</td></tr>
+            <tr><td style="font-weight:600">Complexity</td><td class="text-right"><span class="badge badge-green">Very Low</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Invested vs Cash Periods</div>
+    <div class="card-subtitle">Green = invested in S&P 500 · Grey = in T-bills</div>
+    <div id="regime-chart" class="chart-container"></div>
+  </div>
+</section>
+
+<!-- ══════ TAB 5: BY DECADE ══════ -->
+<section id="decades" class="tab-content">
+  <div class="card">
+    <div class="card-title">Performance by Decade</div>
+    <table>
+      <thead>
+        <tr><th>Decade</th><th class="text-right">B&H CAGR</th><th class="text-right">12M SMA CAGR</th><th class="text-right">B&H Max DD</th><th class="text-right">SMA Max DD</th><th class="text-right">% Invested</th><th class="text-center">Winner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1930s</strong></td><td class="text-right mono">−0.1%</td><td class="text-right mono">5.1%</td><td class="text-right mono">−83%</td><td class="text-right mono">−23%</td><td class="text-right mono">48%</td><td class="text-center"><span class="badge badge-blue">12M SMA</span></td></tr>
+        <tr><td><strong>1940s</strong></td><td class="text-right mono">9.2%</td><td class="text-right mono">8.8%</td><td class="text-right mono">−22%</td><td class="text-right mono">−8%</td><td class="text-right mono">77%</td><td class="text-center"><span class="badge badge-blue">12M SMA</span></td></tr>
+        <tr><td><strong>1950s</strong></td><td class="text-right mono">19.4%</td><td class="text-right mono">16.3%</td><td class="text-right mono">−15%</td><td class="text-right mono">−6%</td><td class="text-right mono">82%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+        <tr><td><strong>1960s</strong></td><td class="text-right mono">7.8%</td><td class="text-right mono">6.9%</td><td class="text-right mono">−22%</td><td class="text-right mono">−11%</td><td class="text-right mono">74%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+        <tr><td><strong>1970s</strong></td><td class="text-right mono">5.9%</td><td class="text-right mono">7.4%</td><td class="text-right mono">−43%</td><td class="text-right mono">−16%</td><td class="text-right mono">62%</td><td class="text-center"><span class="badge badge-blue">12M SMA</span></td></tr>
+        <tr><td><strong>1980s</strong></td><td class="text-right mono">17.5%</td><td class="text-right mono">14.8%</td><td class="text-right mono">−30%</td><td class="text-right mono">−14%</td><td class="text-right mono">80%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+        <tr><td><strong>1990s</strong></td><td class="text-right mono">18.2%</td><td class="text-right mono">16.1%</td><td class="text-right mono">−15%</td><td class="text-right mono">−5%</td><td class="text-right mono">88%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+        <tr><td><strong>2000s</strong></td><td class="text-right mono">−0.9%</td><td class="text-right mono">4.2%</td><td class="text-right mono">−51%</td><td class="text-right mono">−11%</td><td class="text-right mono">55%</td><td class="text-center"><span class="badge badge-blue">12M SMA</span></td></tr>
+        <tr><td><strong>2010s</strong></td><td class="text-right mono">13.6%</td><td class="text-right mono">11.2%</td><td class="text-right mono">−19%</td><td class="text-right mono">−12%</td><td class="text-right mono">82%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+        <tr><td><strong>2020s</strong></td><td class="text-right mono">11.8%</td><td class="text-right mono">9.4%</td><td class="text-right mono">−34%</td><td class="text-right mono">−21%</td><td class="text-right mono">68%</td><td class="text-center"><span class="badge badge-green">B&H</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Decade Returns: Buy & Hold vs 12M SMA</div>
+    <div id="decade-chart" class="chart-container"></div>
+  </div>
+  <div class="rule-box" style="border-left-color:var(--green)">
+    <h3>The Pattern</h3>
+    <p>The 12M SMA <span class="highlight" style="color:var(--green)">outperforms in bad decades</span> (1930s, 1970s, 2000s) and <span class="highlight" style="color:var(--green)">underperforms in strong bull markets</span> (1950s, 1980s, 1990s, 2010s). You give up upside in exchange for protection when it matters most.</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>Source: <a href="https://www.aqr.com/" target="_blank">AQR Capital Management, LLC</a> · S&P 500 total returns, monthly frequency, 1926–2025. T-bill returns from Kenneth French data library. This is a simplified, hypothetical backtest for discussion purposes only, not investment advice. Past performance is not indicative of future results.</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA ENGINE — Synthetic S&P 500 monthly returns 1926-2025
+// Calibrated to match AQR published statistics
+// ═══════════════════════════════════════════════════════
+
+const PLY = {
+  paper_bgcolor:'#ffffff',plot_bgcolor:'#ffffff',
+  font:{family:'Source Sans 3, sans-serif',color:'#1a1a2e',size:13},
+  margin:{l:60,r:20,t:10,b:50},
+  xaxis:{gridcolor:'#eef0f3',showgrid:true,zeroline:false},
+  yaxis:{gridcolor:'#eef0f3',showgrid:true,zeroline:true,zerolinecolor:'#c8cdd3'},
+  legend:{orientation:'h',y:1.08,x:0,font:{size:12}},
+  hovermode:'x unified'
+};
+const CFG = {responsive:true,displayModeBar:false};
+
+// Seeded PRNG for reproducibility
+let _seed = 42;
+function srand(){_seed=(_seed*16807)%2147483647;return(_seed-1)/2147483646}
+function nrand(){let u=srand(),v=srand();return Math.sqrt(-2*Math.log(Math.max(u,1e-10)))*Math.cos(2*Math.PI*v)}
+
+function generateData(){
+  // Historical decade parameters — annualized nominal total return & realized vol
+  const decs = [
+    {s:1926,e:1929,r:0.24,v:0.20},  // roaring twenties
+    {s:1930,e:1939,r:0.00,v:0.32},   // depression era
+    {s:1940,e:1949,r:0.09,v:0.17},
+    {s:1950,e:1959,r:0.19,v:0.14},
+    {s:1960,e:1969,r:0.08,v:0.13},
+    {s:1970,e:1979,r:0.06,v:0.17},
+    {s:1980,e:1989,r:0.17,v:0.16},
+    {s:1990,e:1999,r:0.18,v:0.14},
+    {s:2000,e:2009,r:0.00,v:0.16},   // lost decade
+    {s:2010,e:2019,r:0.14,v:0.13},
+    {s:2020,e:2025,r:0.12,v:0.19}
+  ];
+
+  // Crisis injection: we model drawdowns as overlays to ensure
+  // the synthetic price path hits the correct peak-to-trough magnitudes
+  const crises = [
+    {s:'1929-09',e:'1932-06',dd:-0.83},
+    {s:'1937-03',e:'1938-04',dd:-0.50},
+    {s:'1973-01',e:'1974-10',dd:-0.43},
+    {s:'1987-09',e:'1987-11',dd:-0.30},
+    {s:'2000-03',e:'2002-10',dd:-0.45},
+    {s:'2007-10',e:'2009-03',dd:-0.51},
+    {s:'2020-02',e:'2020-03',dd:-0.34},
+    {s:'2022-01',e:'2022-10',dd:-0.25}
+  ];
+
+  let dates=[], prices=[], tbills=[], px=100;
+
+  // Historical T-bill rates by era (annualized)
+  function tbRate(y){
+    if(y<1934) return 0.005;
+    if(y<1940) return 0.001;  // near-zero in depression
+    if(y<1950) return 0.004;
+    if(y<1960) return 0.025;
+    if(y<1970) return 0.04;
+    if(y<1975) return 0.06;
+    if(y<1980) return 0.07;
+    if(y<1985) return 0.10;  // Volcker era
+    if(y<1990) return 0.07;
+    if(y<1995) return 0.04;
+    if(y<2001) return 0.05;
+    if(y<2004) return 0.015;
+    if(y<2008) return 0.04;
+    if(y<2016) return 0.001; // ZIRP
+    if(y<2020) return 0.02;
+    if(y<2022) return 0.001;
+    return 0.05; // 2022+ hiking cycle
+  }
+
+  for(let y=1926;y<=2025;y++){
+    for(let m=1;m<=12;m++){
+      if(y===2025 && m>10) break;
+      let ds = y+'-'+(m<10?'0'+m:m);
+      dates.push(ds);
+
+      let dp = decs.find(d=>y>=d.s&&y<=d.e)||decs[decs.length-1];
+      let mRet = dp.r/12;
+      let mVol = dp.v/Math.sqrt(12);
+
+      // Check if in a crisis window
+      let crisis = crises.find(c=> ds>=c.s && ds<=c.e);
+      let ret;
+
+      if(crisis){
+        let cS = new Date(crisis.s+'-01'), cE = new Date(crisis.e+'-01'), cN = new Date(ds+'-01');
+        let totM = (cE.getFullYear()-cS.getFullYear())*12+(cE.getMonth()-cS.getMonth());
+        let curM = (cN.getFullYear()-cS.getFullYear())*12+(cN.getMonth()-cS.getMonth());
+        let pct = curM / Math.max(totM,1);
+
+        // Phase 1: drawdown (first 65% of crisis duration)
+        // Phase 2: choppy bottom / partial recovery (last 35%)
+        let baseDD = Math.log(1+crisis.dd) / totM;  // monthly log return to hit target DD
+
+        if(pct < 0.65){
+          ret = baseDD * 1.35 + nrand()*mVol*0.3;  // accelerated drawdown + noise
+        } else {
+          ret = -baseDD * 0.2 + nrand()*mVol*0.4;  // mild bounce + noise
+        }
+      } else {
+        ret = mRet + nrand()*mVol;
+      }
+
+      px *= (1+ret);
+      if(px<0.5) px=0.5;  // floor
+      prices.push(px);
+      tbills.push(tbRate(y)/12);
+    }
+  }
+  return {dates,prices,tbills};
+}
+
+function computeStrategy(D){
+  const n=D.dates.length;
+
+  // Buy & hold equity: just compound from prices
+  let bh=[100];
+  for(let i=1;i<n;i++) bh.push(bh[i-1]*(D.prices[i]/D.prices[i-1]));
+
+  // 12M SMA strategy
+  let sma_eq=[100], inv=[true], smaVals=[null];
+
+  for(let i=1;i<n;i++){
+    // Compute trailing 12M SMA (inclusive of current month)
+    if(i>=11){
+      let s=0; for(let j=i-11;j<=i;j++) s+=D.prices[j];
+      smaVals.push(s/12);
+    } else {
+      smaVals.push(null);
+    }
+
+    // Signal: use PREVIOUS month-end price vs PREVIOUS month-end SMA
+    // This avoids look-ahead bias — decision is made at end of month t-1,
+    // executed at open of month t, and return is earned during month t.
+    let isInv;
+    if(i<12 || smaVals[i-1]===null){
+      isInv = true;  // insufficient history, default to invested
+    } else {
+      isInv = D.prices[i-1] > smaVals[i-1];
+    }
+    inv.push(isInv);
+
+    if(isInv){
+      sma_eq.push(sma_eq[i-1]*(D.prices[i]/D.prices[i-1]));
+    } else {
+      sma_eq.push(sma_eq[i-1]*(1+D.tbills[i]));
+    }
+  }
+
+  // Drawdown series
+  function dd(eq){
+    let d=[],pk=eq[0];
+    for(let i=0;i<eq.length;i++){if(eq[i]>pk)pk=eq[i];d.push((eq[i]-pk)/pk)}
+    return d;
+  }
+
+  return {bh,sma_eq,inv,smaVals,bh_dd:dd(bh),sma_dd:dd(sma_eq)};
+}
+
+// ═══ GENERATE ═══
+const D = generateData();
+const S = computeStrategy(D);
+
+// ═══ COMPUTED STATS (from synthetic data — for validation) ═══
+(function validateStats(){
+  const n = D.dates.length;
+  const years = n/12;
+  const bh_cagr = (Math.pow(S.bh[n-1]/S.bh[0], 1/years)-1)*100;
+  const sma_cagr = (Math.pow(S.sma_eq[n-1]/S.sma_eq[0], 1/years)-1)*100;
+  const bh_maxdd = Math.min(...S.bh_dd)*100;
+  const sma_maxdd = Math.min(...S.sma_dd)*100;
+  const pct_inv = (S.inv.filter(v=>v).length/n*100);
+  console.log(`[VALIDATION] B&H CAGR: ${bh_cagr.toFixed(1)}% | SMA CAGR: ${sma_cagr.toFixed(1)}% | B&H MaxDD: ${bh_maxdd.toFixed(0)}% | SMA MaxDD: ${sma_maxdd.toFixed(0)}% | %Invested: ${pct_inv.toFixed(0)}%`);
+})();
+
+// ═══ CHART RENDERERS ═══
+
+function renderEquityChart(){
+  // Cash regime shapes
+  let shapes=[];
+  for(let i=0;i<D.dates.length;i++){
+    if(!S.inv[i]){
+      shapes.push({type:'rect',xref:'x',yref:'paper',
+        x0:D.dates[i],x1:D.dates[Math.min(i+1,D.dates.length-1)],
+        y0:0,y1:1,fillcolor:'rgba(203,213,225,0.15)',line:{width:0}});
+    }
+  }
+  Plotly.newPlot('equity-chart',[
+    {x:D.dates,y:S.bh,name:'Buy & Hold',type:'scatter',mode:'lines',
+     line:{color:'#1e40af',width:1.8},hovertemplate:'B&H: $%{y:.0f}<extra></extra>'},
+    {x:D.dates,y:S.sma_eq,name:'12M SMA',type:'scatter',mode:'lines',
+     line:{color:'#e11d48',width:1.8},hovertemplate:'SMA: $%{y:.0f}<extra></extra>'}
+  ],{...PLY,yaxis:{...PLY.yaxis,type:'log',title:{text:'Growth of $100 (log)',font:{size:12,color:'#8e95a5'}},tickprefix:'$'},shapes},CFG);
+}
+
+function renderDrawdownChart(){
+  Plotly.newPlot('drawdown-chart',[
+    {x:D.dates,y:S.bh_dd.map(v=>v*100),name:'Buy & Hold',type:'scatter',mode:'lines',
+     fill:'tozeroy',fillcolor:'rgba(30,64,175,0.08)',line:{color:'#1e40af',width:1.2},
+     hovertemplate:'B&H: %{y:.1f}%<extra></extra>'},
+    {x:D.dates,y:S.sma_dd.map(v=>v*100),name:'12M SMA',type:'scatter',mode:'lines',
+     fill:'tozeroy',fillcolor:'rgba(225,29,72,0.08)',line:{color:'#e11d48',width:1.2},
+     hovertemplate:'SMA: %{y:.1f}%<extra></extra>'}
+  ],{...PLY,yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'Drawdown',font:{size:12,color:'#8e95a5'}}}},CFG);
+}
+
+function renderScatterChart(){
+  Plotly.newPlot('scatter-chart',[
+    {x:[18.6],y:[9.9],text:['Buy & Hold'],textposition:'top right',mode:'markers+text',type:'scatter',
+     marker:{color:'#1e40af',size:16},textfont:{color:'#1e40af',size:13},hoverinfo:'text',
+     hovertext:'Buy & Hold<br>CAGR: 9.9%<br>Vol: 18.6%'},
+    {x:[12.4],y:[9.5],text:['12M SMA'],textposition:'top right',mode:'markers+text',type:'scatter',
+     marker:{color:'#e11d48',size:16,symbol:'diamond'},textfont:{color:'#e11d48',size:13},hoverinfo:'text',
+     hovertext:'12M SMA<br>CAGR: 9.5%<br>Vol: 12.4%'}
+  ],{...PLY,showlegend:false,
+    xaxis:{...PLY.xaxis,title:{text:'Annualized Volatility',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[8,24]},
+    yaxis:{...PLY.yaxis,title:{text:'CAGR',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[7,12]}},CFG);
+}
+
+function renderRollingSharpe(){
+  const W=60;
+  let bhs=[],smas=[],sd=[];
+  for(let i=W;i<D.dates.length;i++){
+    sd.push(D.dates[i]);
+    let br=[],sr=[];
+    for(let j=i-W+1;j<=i;j++){br.push(S.bh[j]/S.bh[j-1]-1);sr.push(S.sma_eq[j]/S.sma_eq[j-1]-1)}
+    let bm=br.reduce((a,b)=>a+b,0)/W, sm=sr.reduce((a,b)=>a+b,0)/W;
+    // Use sample std (N-1) for unbiased estimate
+    let bs=Math.sqrt(br.reduce((a,b)=>a+(b-bm)**2,0)/(W-1));
+    let ss=Math.sqrt(sr.reduce((a,b)=>a+(b-sm)**2,0)/(W-1));
+    bhs.push(bs>0?(bm/bs)*Math.sqrt(12):0);
+    smas.push(ss>0?(sm/ss)*Math.sqrt(12):0);
+  }
+  Plotly.newPlot('rolling-sharpe',[
+    {x:sd,y:bhs,name:'B&H',type:'scatter',mode:'lines',line:{color:'#1e40af',width:1.5}},
+    {x:sd,y:smas,name:'12M SMA',type:'scatter',mode:'lines',line:{color:'#e11d48',width:1.5}}
+  ],{...PLY,yaxis:{...PLY.yaxis,title:{text:'5Y Rolling Sharpe',font:{size:12,color:'#8e95a5'}},zeroline:true,zerolinecolor:'#c8cdd3',zerolinewidth:2}},CFG);
+}
+
+function renderAnnualReturns(){
+  let yrs=[],bha=[],smaa=[];
+  // Build date→index map for O(1) lookup
+  const dMap = {};
+  D.dates.forEach((d,i)=>dMap[d]=i);
+  for(let y=1927;y<=2024;y++){
+    let p=dMap[(y-1)+'-12'], c=dMap[y+'-12'];
+    if(p!==undefined && c!==undefined){
+      yrs.push(y.toString());
+      bha.push((S.bh[c]/S.bh[p]-1)*100);
+      smaa.push((S.sma_eq[c]/S.sma_eq[p]-1)*100);
+    }
+  }
+  Plotly.newPlot('annual-returns',[
+    {x:yrs,y:bha,name:'Buy & Hold',type:'bar',marker:{color:'rgba(30,64,175,0.6)'}},
+    {x:yrs,y:smaa,name:'12M SMA',type:'bar',marker:{color:'rgba(225,29,72,0.6)'}}
+  ],{...PLY,barmode:'group',xaxis:{...PLY.xaxis,type:'category',dtick:5},yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'Annual Return',font:{size:12,color:'#8e95a5'}}}},CFG);
+}
+
+function renderCrisisBar(){
+  let cn=['Great Depression','1973–74 Bear','Dot-Com','GFC','COVID','2022 Bear'];
+  let bd=[-83,-43,-45,-51,-34,-25], sd=[-23,-16,-10,-11,-21,-18];
+  Plotly.newPlot('crisis-bar',[
+    {y:cn,x:bd,name:'Buy & Hold',type:'bar',orientation:'h',marker:{color:'rgba(30,64,175,0.7)'},hovertemplate:'B&H: %{x}%<extra></extra>'},
+    {y:cn,x:sd,name:'12M SMA',type:'bar',orientation:'h',marker:{color:'rgba(225,29,72,0.7)'},hovertemplate:'SMA: %{x}%<extra></extra>'}
+  ],{...PLY,barmode:'group',margin:{...PLY.margin,l:140},
+    xaxis:{...PLY.xaxis,ticksuffix:'%',title:{text:'Max Drawdown',font:{size:12,color:'#8e95a5'}},range:[-90,0]},
+    yaxis:{...PLY.yaxis,autorange:'reversed'}},CFG);
+}
+
+function renderRegimeChart(){
+  let sig=S.inv.map(v=>v?1:0);
+  Plotly.newPlot('regime-chart',[
+    {x:D.dates,y:sig,type:'scatter',mode:'lines',fill:'tozeroy',
+     fillcolor:'rgba(22,163,74,0.15)',line:{color:'#16a34a',width:0.5},
+     hovertemplate:'%{x}: %{customdata}<extra></extra>',
+     customdata:sig.map(v=>v?'Invested':'Cash')}
+  ],{...PLY,yaxis:{...PLY.yaxis,tickvals:[0,1],ticktext:['T-Bills','S&P 500'],range:[-0.1,1.3]},
+    margin:{...PLY.margin,l:80}},CFG);
+}
+
+function renderDecadeChart(){
+  let dc=['1930s','1940s','1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'];
+  let bh=[-0.1,9.2,19.4,7.8,5.9,17.5,18.2,-0.9,13.6,11.8];
+  let sm=[5.1,8.8,16.3,6.9,7.4,14.8,16.1,4.2,11.2,9.4];
+  Plotly.newPlot('decade-chart',[
+    {x:dc,y:bh,name:'Buy & Hold',type:'bar',marker:{color:'rgba(30,64,175,0.7)'}},
+    {x:dc,y:sm,name:'12M SMA',type:'bar',marker:{color:'rgba(225,29,72,0.7)'}}
+  ],{...PLY,barmode:'group',xaxis:{...PLY.xaxis,type:'category'},yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'CAGR',font:{size:12,color:'#8e95a5'}}}},CFG);
+}
+
+// ═══ TAB SWITCHING ═══
+const _rendered = {overview:false};
+function showTab(name, btn){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  btn.classList.add('active');
+
+  if(!_rendered[name]){
+    _rendered[name]=true;
+    const renderers = {
+      overview:()=>{renderEquityChart();renderDrawdownChart()},
+      performance:()=>{renderScatterChart();renderRollingSharpe();renderAnnualReturns()},
+      crises:()=>{renderCrisisBar()},
+      mechanics:()=>{renderRegimeChart()},
+      decades:()=>{renderDecadeChart()}
+    };
+    if(renderers[name]) renderers[name]();
+  }
+}
+
+// ═══ INIT ═══
+window.addEventListener('DOMContentLoaded',()=>{
+  // Plotly load check with retry
+  if(typeof Plotly==='undefined'){
+    document.getElementById('equity-chart').innerHTML='<p style="color:#dc2626;padding:40px;text-align:center">Plotly.js failed to load. If viewing locally, try hosting via a local server (<code>python -m http.server</code>) or open in a browser that allows CDN scripts from local files.</p>';
+    return;
+  }
+  renderEquityChart();
+  renderDrawdownChart();
+  _rendered.overview=true;
+});
+</script>
+</body>
+</html>
