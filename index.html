@@ -171,7 +171,8 @@ tr:last-child td{border-bottom:none}
     <div class="card-title">Equity Curves (Log Scale)</div>
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:var(--bh)"></div>Buy & Hold</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--sma)"></div>12M SMA</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--sma)"></div>12M SMA (Gross)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--sma);opacity:0.5;background-image:repeating-linear-gradient(90deg,var(--sma) 0 4px,transparent 4px 8px);background-size:100% 2px;background-repeat:no-repeat;background-position:center"></div>12M SMA (Net of TC)</div>
       <div class="legend-item"><div class="legend-dot" style="background:#cbd5e1"></div>Cash / T-Bills Periods</div>
     </div>
     <div id="equity-chart" class="chart-container"></div>
@@ -309,7 +310,7 @@ tr:last-child td{border-bottom:none}
             <tr><td style="font-weight:600">Risk-Off Asset</td><td class="text-right">U.S. T-Bills</td></tr>
             <tr><td style="font-weight:600">Avg. Switches / Year</td><td class="text-right mono">~1.5</td></tr>
             <tr><td style="font-weight:600">Avg. Risk-Off Duration</td><td class="text-right mono">~8 months</td></tr>
-            <tr><td style="font-weight:600">Transaction Costs</td><td class="text-right">Minimal (broad index)</td></tr>
+            <tr><td style="font-weight:600">Transaction Costs</td><td class="text-right">Era-adjusted: 100bp (1920s) → 3bp (2020s)</td></tr>
             <tr><td style="font-weight:600">Complexity</td><td class="text-right"><span class="badge badge-green">Very Low</span></td></tr>
           </tbody>
         </table>
@@ -320,6 +321,24 @@ tr:last-child td{border-bottom:none}
     <div class="card-title">Invested vs Cash Periods</div>
     <div class="card-subtitle">Green = invested in S&P 500 · Grey = in T-bills</div>
     <div id="regime-chart" class="chart-container"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Transaction Cost Assumptions</div>
+    <div class="card-subtitle">One-way cost per signal switch (commission + spread + market impact on broad index)</div>
+    <table>
+      <thead><tr><th>Era</th><th class="text-right">One-Way Cost</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Pre-1940</td><td class="text-right mono">100 bp</td><td>Fixed commissions, wide spreads, floor-based execution</td></tr>
+        <tr><td class="mono">1940–1959</td><td class="text-right mono">70–80 bp</td><td>NYSE automation begins, improving liquidity</td></tr>
+        <tr><td class="mono">1960–1974</td><td class="text-right mono">50–60 bp</td><td>Institutional growth, still fixed commissions</td></tr>
+        <tr><td class="mono">1975–1989</td><td class="text-right mono">30–40 bp</td><td>Post-Mayday negotiated commissions, electronic trading</td></tr>
+        <tr><td class="mono">1990–1999</td><td class="text-right mono">20 bp</td><td>ECNs, decimalization approaching</td></tr>
+        <tr><td class="mono">2000–2009</td><td class="text-right mono">10–15 bp</td><td>Post-decimalization, algorithmic execution</td></tr>
+        <tr><td class="mono">2010–2019</td><td class="text-right mono">5 bp</td><td>Near-zero commissions, ETF-level execution</td></tr>
+        <tr><td class="mono">2020+</td><td class="text-right mono">3 bp</td><td>SPY/index-level spreads, commission-free brokers</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--t3);font-size:12px;margin-top:12px;line-height:1.6">Sources: Jones (2002) "A Century of Stock Market Liquidity and Trading Costs"; French (2008) "The Cost of Active Investing"; Hasbrouck (2009). Cost applied once per switch direction (equity→cash or cash→equity). ~1.5 round-trip switches per year on average.</p>
   </div>
 </section>
 
@@ -356,7 +375,7 @@ tr:last-child td{border-bottom:none}
 </section>
 
 <footer class="footer">
-  <p>Source: <a href="https://www.aqr.com/" target="_blank">AQR Capital Management, LLC</a> · S&P 500 total returns, monthly frequency, 1926–2025. T-bill returns from Kenneth French data library. This is a simplified, hypothetical backtest for discussion purposes only, not investment advice. Past performance is not indicative of future results.</p>
+  <p>Source: <a href="https://www.aqr.com/" target="_blank">AQR Capital Management, LLC</a> · S&P 500 total returns, monthly frequency, 1926–2025. T-bill returns from Kenneth French data library. Transaction costs modeled as era-appropriate one-way costs per signal switch: ~100bp pre-1940, declining to ~3bp post-2020, per Jones (2002) and French (2008). This is a simplified, hypothetical backtest for discussion purposes only, not investment advice. Past performance is not indicative of future results.</p>
 </footer>
 
 <script>
@@ -475,6 +494,24 @@ function generateData(){
   return {dates,prices,tbills};
 }
 
+// Era-appropriate ONE-WAY transaction cost (commission + spread + market impact)
+// Applied on each signal switch (equity→cash or cash→equity)
+// Sources: Jones (2002), French (2008), Hasbrouck (2009)
+function tcCost(year){
+  if(year<1940) return 0.0100;  // ~100bp: high fixed commissions, wide spreads, floor trading
+  if(year<1950) return 0.0080;  // ~80bp: improving but still pre-electronic
+  if(year<1960) return 0.0070;  // ~70bp: NYSE automation begins
+  if(year<1970) return 0.0060;  // ~60bp: institutional growth, still fixed commissions
+  if(year<1975) return 0.0050;  // ~50bp: Mayday (1975) approaches
+  if(year<1980) return 0.0040;  // ~40bp: post-Mayday negotiated commissions
+  if(year<1990) return 0.0030;  // ~30bp: electronic trading emerges
+  if(year<2000) return 0.0020;  // ~20bp: decimalization approaching, ECNs
+  if(year<2005) return 0.0015;  // ~15bp: post-decimalization (2001)
+  if(year<2010) return 0.0010;  // ~10bp: HFT era, tight spreads
+  if(year<2020) return 0.0005;  // ~5bp: ETF/index level, near-zero commissions
+  return 0.0003;                // ~3bp: 2020s, SPY-level execution on broad index
+}
+
 function computeStrategy(D){
   const n=D.dates.length;
 
@@ -482,8 +519,9 @@ function computeStrategy(D){
   let bh=[100];
   for(let i=1;i<n;i++) bh.push(bh[i-1]*(D.prices[i]/D.prices[i-1]));
 
-  // 12M SMA strategy
-  let sma_eq=[100], inv=[true], smaVals=[null];
+  // 12M SMA strategy — gross (no TC) and net (with TC)
+  let sma_eq=[100], sma_net=[100], inv=[true], smaVals=[null];
+  let switchCount=0, totalTcPaid=0;
 
   for(let i=1;i<n;i++){
     // Compute trailing 12M SMA (inclusive of current month)
@@ -505,10 +543,25 @@ function computeStrategy(D){
     }
     inv.push(isInv);
 
+    // Detect signal switch — cost is applied at point of trade
+    let switched = (isInv !== inv[i-1]);
+    let year = parseInt(D.dates[i].substring(0,4));
+    let tc = switched ? tcCost(year) : 0;
+    if(switched) switchCount++;
+    totalTcPaid += tc;
+
+    // Gross equity curve (no TC)
     if(isInv){
       sma_eq.push(sma_eq[i-1]*(D.prices[i]/D.prices[i-1]));
     } else {
       sma_eq.push(sma_eq[i-1]*(1+D.tbills[i]));
+    }
+
+    // Net equity curve (with TC applied on switch months)
+    if(isInv){
+      sma_net.push(sma_net[i-1]*(D.prices[i]/D.prices[i-1])*(1-tc));
+    } else {
+      sma_net.push(sma_net[i-1]*(1+D.tbills[i])*(1-tc));
     }
   }
 
@@ -519,7 +572,8 @@ function computeStrategy(D){
     return d;
   }
 
-  return {bh,sma_eq,inv,smaVals,bh_dd:dd(bh),sma_dd:dd(sma_eq)};
+  return {bh,sma_eq,sma_net,inv,smaVals,switchCount,totalTcPaid,
+          bh_dd:dd(bh),sma_dd:dd(sma_eq),sma_net_dd:dd(sma_net)};
 }
 
 // ═══ GENERATE ═══
@@ -532,10 +586,16 @@ const S = computeStrategy(D);
   const years = n/12;
   const bh_cagr = (Math.pow(S.bh[n-1]/S.bh[0], 1/years)-1)*100;
   const sma_cagr = (Math.pow(S.sma_eq[n-1]/S.sma_eq[0], 1/years)-1)*100;
+  const sma_net_cagr = (Math.pow(S.sma_net[n-1]/S.sma_net[0], 1/years)-1)*100;
   const bh_maxdd = Math.min(...S.bh_dd)*100;
   const sma_maxdd = Math.min(...S.sma_dd)*100;
+  const sma_net_maxdd = Math.min(...S.sma_net_dd)*100;
   const pct_inv = (S.inv.filter(v=>v).length/n*100);
-  console.log(`[VALIDATION] B&H CAGR: ${bh_cagr.toFixed(1)}% | SMA CAGR: ${sma_cagr.toFixed(1)}% | B&H MaxDD: ${bh_maxdd.toFixed(0)}% | SMA MaxDD: ${sma_maxdd.toFixed(0)}% | %Invested: ${pct_inv.toFixed(0)}%`);
+  const avg_switches = S.switchCount / years;
+  const tc_drag = sma_cagr - sma_net_cagr;
+  console.log(`[VALIDATION] B&H CAGR: ${bh_cagr.toFixed(1)}% | SMA Gross CAGR: ${sma_cagr.toFixed(1)}% | SMA Net CAGR: ${sma_net_cagr.toFixed(1)}% | TC Drag: ${tc_drag.toFixed(2)}%pa`);
+  console.log(`[VALIDATION] B&H MaxDD: ${bh_maxdd.toFixed(0)}% | SMA Gross MaxDD: ${sma_maxdd.toFixed(0)}% | SMA Net MaxDD: ${sma_net_maxdd.toFixed(0)}% | %Invested: ${pct_inv.toFixed(0)}%`);
+  console.log(`[VALIDATION] Total switches: ${S.switchCount} | Avg switches/yr: ${avg_switches.toFixed(1)} | Cumulative TC: ${(S.totalTcPaid*100).toFixed(1)}bp`);
 })();
 
 // ═══ CHART RENDERERS ═══
@@ -553,8 +613,10 @@ function renderEquityChart(){
   Plotly.newPlot('equity-chart',[
     {x:D.dates,y:S.bh,name:'Buy & Hold',type:'scatter',mode:'lines',
      line:{color:'#1e40af',width:1.8},hovertemplate:'B&H: $%{y:.0f}<extra></extra>'},
-    {x:D.dates,y:S.sma_eq,name:'12M SMA',type:'scatter',mode:'lines',
-     line:{color:'#e11d48',width:1.8},hovertemplate:'SMA: $%{y:.0f}<extra></extra>'}
+    {x:D.dates,y:S.sma_eq,name:'12M SMA (Gross)',type:'scatter',mode:'lines',
+     line:{color:'#e11d48',width:1.8},hovertemplate:'SMA Gross: $%{y:.0f}<extra></extra>'},
+    {x:D.dates,y:S.sma_net,name:'12M SMA (Net of TC)',type:'scatter',mode:'lines',
+     line:{color:'#e11d48',width:1.4,dash:'dot'},hovertemplate:'SMA Net: $%{y:.0f}<extra></extra>'}
   ],{...PLY,yaxis:{...PLY.yaxis,type:'log',title:{text:'Growth of $100 (log)',font:{size:12,color:'#8e95a5'}},tickprefix:'$'},shapes},CFG);
 }
 
@@ -563,10 +625,13 @@ function renderDrawdownChart(){
     {x:D.dates,y:S.bh_dd.map(v=>v*100),name:'Buy & Hold',type:'scatter',mode:'lines',
      fill:'tozeroy',fillcolor:'rgba(30,64,175,0.08)',line:{color:'#1e40af',width:1.2},
      hovertemplate:'B&H: %{y:.1f}%<extra></extra>'},
-    {x:D.dates,y:S.sma_dd.map(v=>v*100),name:'12M SMA',type:'scatter',mode:'lines',
+    {x:D.dates,y:S.sma_dd.map(v=>v*100),name:'12M SMA (Gross)',type:'scatter',mode:'lines',
      fill:'tozeroy',fillcolor:'rgba(225,29,72,0.08)',line:{color:'#e11d48',width:1.2},
-     hovertemplate:'SMA: %{y:.1f}%<extra></extra>'}
-  ],{...PLY,yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'Drawdown',font:{size:12,color:'#8e95a5'}}}},CFG);
+     hovertemplate:'SMA Gross: %{y:.1f}%<extra></extra>'},
+    {x:D.dates,y:S.sma_net_dd.map(v=>v*100),name:'12M SMA (Net of TC)',type:'scatter',mode:'lines',
+     line:{color:'#e11d48',width:1,dash:'dot'},
+     hovertemplate:'SMA Net: %{y:.1f}%<extra></extra>'}
+  ],{...PLY,yaxis:{...PLY.yaxis,type:'linear',ticksuffix:'%',title:{text:'Drawdown',font:{size:12,color:'#8e95a5'}}}},CFG);
 }
 
 function renderScatterChart(){
@@ -577,29 +642,36 @@ function renderScatterChart(){
     {x:[12.4],y:[9.5],text:['12M SMA'],textposition:'top right',mode:'markers+text',type:'scatter',
      marker:{color:'#e11d48',size:16,symbol:'diamond'},textfont:{color:'#e11d48',size:13},hoverinfo:'text',
      hovertext:'12M SMA<br>CAGR: 9.5%<br>Vol: 12.4%'}
-  ],{...PLY,showlegend:false,
-    xaxis:{...PLY.xaxis,title:{text:'Annualized Volatility',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[8,24]},
-    yaxis:{...PLY.yaxis,title:{text:'CAGR',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[7,12]}},CFG);
+  ],{...PLY,showlegend:false,hovermode:'closest',
+    xaxis:{...PLY.xaxis,type:'linear',title:{text:'Annualized Volatility',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[8,24],dtick:2},
+    yaxis:{...PLY.yaxis,type:'linear',title:{text:'CAGR',font:{size:12,color:'#8e95a5'}},ticksuffix:'%',range:[7,12],dtick:0.5}},CFG);
 }
 
 function renderRollingSharpe(){
   const W=60;
-  let bhs=[],smas=[],sd=[];
+  let bhs=[],smas=[],sma_nets=[],sd=[];
   for(let i=W;i<D.dates.length;i++){
     sd.push(D.dates[i]);
-    let br=[],sr=[];
-    for(let j=i-W+1;j<=i;j++){br.push(S.bh[j]/S.bh[j-1]-1);sr.push(S.sma_eq[j]/S.sma_eq[j-1]-1)}
-    let bm=br.reduce((a,b)=>a+b,0)/W, sm=sr.reduce((a,b)=>a+b,0)/W;
+    let br=[],sr=[],nr=[];
+    for(let j=i-W+1;j<=i;j++){
+      br.push(S.bh[j]/S.bh[j-1]-1);
+      sr.push(S.sma_eq[j]/S.sma_eq[j-1]-1);
+      nr.push(S.sma_net[j]/S.sma_net[j-1]-1);
+    }
+    let bm=br.reduce((a,b)=>a+b,0)/W, sm=sr.reduce((a,b)=>a+b,0)/W, nm=nr.reduce((a,b)=>a+b,0)/W;
     // Use sample std (N-1) for unbiased estimate
     let bs=Math.sqrt(br.reduce((a,b)=>a+(b-bm)**2,0)/(W-1));
     let ss=Math.sqrt(sr.reduce((a,b)=>a+(b-sm)**2,0)/(W-1));
+    let ns=Math.sqrt(nr.reduce((a,b)=>a+(b-nm)**2,0)/(W-1));
     bhs.push(bs>0?(bm/bs)*Math.sqrt(12):0);
     smas.push(ss>0?(sm/ss)*Math.sqrt(12):0);
+    sma_nets.push(ns>0?(nm/ns)*Math.sqrt(12):0);
   }
   Plotly.newPlot('rolling-sharpe',[
     {x:sd,y:bhs,name:'B&H',type:'scatter',mode:'lines',line:{color:'#1e40af',width:1.5}},
-    {x:sd,y:smas,name:'12M SMA',type:'scatter',mode:'lines',line:{color:'#e11d48',width:1.5}}
-  ],{...PLY,yaxis:{...PLY.yaxis,title:{text:'5Y Rolling Sharpe',font:{size:12,color:'#8e95a5'}},zeroline:true,zerolinecolor:'#c8cdd3',zerolinewidth:2}},CFG);
+    {x:sd,y:smas,name:'12M SMA (Gross)',type:'scatter',mode:'lines',line:{color:'#e11d48',width:1.5}},
+    {x:sd,y:sma_nets,name:'12M SMA (Net)',type:'scatter',mode:'lines',line:{color:'#e11d48',width:1.2,dash:'dot'}}
+  ],{...PLY,yaxis:{...PLY.yaxis,type:'linear',title:{text:'5Y Rolling Sharpe',font:{size:12,color:'#8e95a5'}},zeroline:true,zerolinecolor:'#c8cdd3',zerolinewidth:2}},CFG);
 }
 
 function renderAnnualReturns(){
@@ -618,7 +690,7 @@ function renderAnnualReturns(){
   Plotly.newPlot('annual-returns',[
     {x:yrs,y:bha,name:'Buy & Hold',type:'bar',marker:{color:'rgba(30,64,175,0.6)'}},
     {x:yrs,y:smaa,name:'12M SMA',type:'bar',marker:{color:'rgba(225,29,72,0.6)'}}
-  ],{...PLY,barmode:'group',xaxis:{...PLY.xaxis,type:'category',dtick:5},yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'Annual Return',font:{size:12,color:'#8e95a5'}}}},CFG);
+  ],{...PLY,barmode:'group',hovermode:'closest',xaxis:{...PLY.xaxis,type:'category',dtick:5},yaxis:{...PLY.yaxis,type:'linear',ticksuffix:'%',title:{text:'Annual Return',font:{size:12,color:'#8e95a5'}}}},CFG);
 }
 
 function renderCrisisBar(){
@@ -627,9 +699,9 @@ function renderCrisisBar(){
   Plotly.newPlot('crisis-bar',[
     {y:cn,x:bd,name:'Buy & Hold',type:'bar',orientation:'h',marker:{color:'rgba(30,64,175,0.7)'},hovertemplate:'B&H: %{x}%<extra></extra>'},
     {y:cn,x:sd,name:'12M SMA',type:'bar',orientation:'h',marker:{color:'rgba(225,29,72,0.7)'},hovertemplate:'SMA: %{x}%<extra></extra>'}
-  ],{...PLY,barmode:'group',margin:{...PLY.margin,l:140},
-    xaxis:{...PLY.xaxis,ticksuffix:'%',title:{text:'Max Drawdown',font:{size:12,color:'#8e95a5'}},range:[-90,0]},
-    yaxis:{...PLY.yaxis,autorange:'reversed'}},CFG);
+  ],{...PLY,barmode:'group',hovermode:'closest',margin:{...PLY.margin,l:140},
+    xaxis:{...PLY.xaxis,type:'linear',ticksuffix:'%',title:{text:'Max Drawdown',font:{size:12,color:'#8e95a5'}},range:[-90,0]},
+    yaxis:{...PLY.yaxis,type:'category',autorange:'reversed'}},CFG);
 }
 
 function renderRegimeChart(){
@@ -639,7 +711,7 @@ function renderRegimeChart(){
      fillcolor:'rgba(22,163,74,0.15)',line:{color:'#16a34a',width:0.5},
      hovertemplate:'%{x}: %{customdata}<extra></extra>',
      customdata:sig.map(v=>v?'Invested':'Cash')}
-  ],{...PLY,yaxis:{...PLY.yaxis,tickvals:[0,1],ticktext:['T-Bills','S&P 500'],range:[-0.1,1.3]},
+  ],{...PLY,yaxis:{...PLY.yaxis,type:'linear',tickvals:[0,1],ticktext:['T-Bills','S&P 500'],range:[-0.1,1.3]},
     margin:{...PLY.margin,l:80}},CFG);
 }
 
@@ -650,7 +722,7 @@ function renderDecadeChart(){
   Plotly.newPlot('decade-chart',[
     {x:dc,y:bh,name:'Buy & Hold',type:'bar',marker:{color:'rgba(30,64,175,0.7)'}},
     {x:dc,y:sm,name:'12M SMA',type:'bar',marker:{color:'rgba(225,29,72,0.7)'}}
-  ],{...PLY,barmode:'group',xaxis:{...PLY.xaxis,type:'category'},yaxis:{...PLY.yaxis,ticksuffix:'%',title:{text:'CAGR',font:{size:12,color:'#8e95a5'}}}},CFG);
+  ],{...PLY,barmode:'group',hovermode:'closest',xaxis:{...PLY.xaxis,type:'category'},yaxis:{...PLY.yaxis,type:'linear',ticksuffix:'%',title:{text:'CAGR',font:{size:12,color:'#8e95a5'}}}},CFG);
 }
 
 // ═══ TAB SWITCHING ═══
